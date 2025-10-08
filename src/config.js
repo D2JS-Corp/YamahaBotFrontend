@@ -1,5 +1,5 @@
 export function getWebrtcUrl() {
-  return import.meta.env.VITE_WEBRTC_URL || (window.location.origin + '/client');
+  return import.meta.env.VITE_WEBRTC_URL || (window.location.origin + '/api/offer');
 }
 
 export function getIceServers() {
