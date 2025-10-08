@@ -10,6 +10,10 @@ const Sidebar = () => {
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
+// Yamaha red #ff0000
+// Azul Racing #0a2d82
+// Gray 7c7 7c
+
   return (
     <div className="w-64 h-screen bg-card border-r border-border flex flex-col sticky top-0">
       {/* Logo Section */}

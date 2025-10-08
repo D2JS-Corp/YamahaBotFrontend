@@ -83,7 +83,7 @@ export const RobotInfo = ({
           title="Conexión"
           value={connection.label}
           icon={Wifi}
-          status={connection.status as any}
+          status={connection.status as "success" | "warning" | "destructive" | "default" | undefined}
         />
       </div>
     </div>
