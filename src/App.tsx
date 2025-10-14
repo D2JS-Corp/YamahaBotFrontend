@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Control from "./pages/Control";
+import RobotPage from "./pages/RobotPage";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,8 @@ function App() {
         <Sonner />
         <Router>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<RobotPage />} />
+            <Route path="/dashboard" element={<Index />} />
             <Route path="/control" element={<Control />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 const Sidebar = () => {
   const location = useLocation();
   const menuItems = [
-    { icon: Home, label: "Overview", path: "/" },
+    { icon: Home, label: "Overview", path: "/dashboard" },
     { icon: Gamepad2, label: "Control", path: "/control" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
