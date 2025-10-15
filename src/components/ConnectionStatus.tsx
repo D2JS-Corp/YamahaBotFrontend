@@ -12,7 +12,8 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ connected, connecti
   if (connecting) {
     label = 'CONECTANDO…'
     cls = 'bg-gray-100 text-gray-700 border-gray-300'
-  } else if (connected) {
+  }
+  if (connected) {
     label = 'CONECTADO'
     cls = 'bg-gray-100 text-gray-700 border-gray-300'
   }
