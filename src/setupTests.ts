@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Silence ResizeObserver errors sometimes thrown by jsdom when components use it.
 class ResizeObserverMock {
@@ -25,37 +26,42 @@ if (!window.matchMedia) {
 }
 
 // Mock básico de canvas para componentes que usan getContext
-if (!HTMLCanvasElement.prototype.getContext) {
+// Sobrescribimos siempre porque jsdom implementa el método pero arroja "Not implemented"
+// @ts-ignore
+HTMLCanvasElement.prototype.getContext = function () {
+  return {
+    canvas: this,
+    fillRect: () => {},
+    clearRect: () => {},
+    getImageData: () => ({ data: [] }),
+    putImageData: () => {},
+    createImageData: () => [],
+    setTransform: () => {},
+    drawImage: () => {},
+    save: () => {},
+    fillText: () => {},
+    restore: () => {},
+    beginPath: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
+    closePath: () => {},
+    stroke: () => {},
+    translate: () => {},
+    scale: () => {},
+    rotate: () => {},
+    arc: () => {},
+    fill: () => {},
+    measureText: () => ({ width: 0 }),
+    lineWidth: 0,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    textBaseline: 'alphabetic',
+  } as unknown as CanvasRenderingContext2D;
+};
+
+// Mock URL.createObjectURL utilizado por librerías de audio/web
+if (!('createObjectURL' in URL)) {
   // @ts-ignore
-  HTMLCanvasElement.prototype.getContext = function () {
-    return {
-      canvas: this,
-      fillRect: () => {},
-      clearRect: () => {},
-      getImageData: () => ({ data: [] }),
-      putImageData: () => {},
-      createImageData: () => [],
-      setTransform: () => {},
-      drawImage: () => {},
-      save: () => {},
-      fillText: () => {},
-      restore: () => {},
-      beginPath: () => {},
-      moveTo: () => {},
-      lineTo: () => {},
-      closePath: () => {},
-      stroke: () => {},
-      translate: () => {},
-      scale: () => {},
-      rotate: () => {},
-      arc: () => {},
-      fill: () => {},
-      measureText: () => ({ width: 0 }),
-      lineWidth: 0,
-      lineCap: 'butt',
-      lineJoin: 'miter',
-      textBaseline: 'alphabetic',
-    } as unknown as CanvasRenderingContext2D;
-  };
+  URL.createObjectURL = vi.fn(() => 'blob:mock');
 }
 

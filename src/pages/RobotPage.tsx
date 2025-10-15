@@ -129,14 +129,14 @@ const RobotPage: React.FC = () => {
 
           <ConnectionStatus connected={connected} connecting={connecting} />
 
-            <ConnectionControls
-              webrtcUrl={webrtcUrl}
-              setWebrtcUrl={setWebrtcUrl}
-              canConnect={canConnect}
-              connecting={connecting}
-              onConnect={connect}
-              onDisconnect={disconnect}
-            />
+          <ConnectionControls
+            webrtcUrl={webrtcUrl}
+            setWebrtcUrl={setWebrtcUrl}
+            canConnect={canConnect}
+            connecting={connecting}
+            onConnect={connect}
+            onDisconnect={disconnect}
+          />
 
           <VoiceMeters />
           <MicToggleButton connected={connected} />

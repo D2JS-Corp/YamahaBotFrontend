@@ -11,7 +11,6 @@ const VoiceMeters: React.FC = () => {
               participantType="bot"
               barColor="#ff0000"
               barCount={13}
-              className="w-full"
             />
           </div>
         </div>

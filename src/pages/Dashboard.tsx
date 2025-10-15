@@ -14,7 +14,7 @@ const Dashboard = () => {
         <header className="border-b border-border bg-card px-8 py-6">
           <h1 className="text-3xl font-bold text-foreground">Robot Status</h1>
         </header>
-  <main className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        <main className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
           {/* Primera fila: mapa arriba a la derecha junto a tarjetas */}
           <StatusCard title="Battery Level" value={85} unit="%" icon={<Zap />} status="Normal" />
           <div className="md:col-start-2 md:row-start-1 lg:col-start-3 lg:row-start-1 lg:row-span-2 self-start">

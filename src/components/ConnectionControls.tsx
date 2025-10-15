@@ -23,7 +23,7 @@ const ConnectionControls: React.FC<ConnectionControlsProps> = ({
         className="flex-1 max-w-md px-4 py-2 rounded-lg bg-white text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff0000]/60 font-mono text-sm"
         value={webrtcUrl}
         onChange={(e) => setWebrtcUrl(e.target.value)}
-        placeholder="http://localhost:7860/client"
+        placeholder="http://localhost:7860/api/offer"
       />
       {canConnect && (
         <button

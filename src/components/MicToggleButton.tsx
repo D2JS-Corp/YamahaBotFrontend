@@ -17,8 +17,7 @@ const MicToggleButton: React.FC<MicToggleButtonProps> = ({ connected }) => {
             onClick={onClick}
             disabled={!connected}
           >
-            <span className="mr-2">{isMicEnabled ? '🔴' : '🎤'}</span>
-            {isMicEnabled ? 'MICRÓFONO ACTIVADO' : 'MICRÓFONO DESACTIVADO'}
+            {isMicEnabled ? 'Micrófono activo' : 'Micrófono inactivo'}
           </button>
         )}
       </PipecatClientMicToggle>
