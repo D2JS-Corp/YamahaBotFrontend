@@ -1,11 +1,11 @@
-import { BatteryChart } from "@/components/BatteryChart";
+import { BatteryChart, type BatteryPoint } from "@/components/BatteryChart";
 import { RobotMap } from "@/components/RobotMap";
 import Sidebar from "@/components/Sidebar";
 import { StatusCard } from "@/components/StatusCard";
-import { ListCard } from "@/components/ListCard";
 import { Zap, Target, Move, Dock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchLatestTopic } from "@/lib/api";
+import { fetchLatestTopic, fetchTopicHistory, parsePercentString, fetchRobotPosition } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
 
 const Dashboard = () => {
   // Intervalo de refresco (ms)
@@ -14,11 +14,11 @@ const Dashboard = () => {
   // Tópicos por tarjeta
   // Nota: estos nombres deben coincidir con el backend
   const TOPICS = {
-    battery: "battery",
-    dockStatus: "dock",
-    velocity: "velocity",
-    goalPose: "goal",
-    position: "position",
+    battery: "ros2/battery",
+    dockStatus: "ros2/dock",
+    velocity: "ros2/velocity",
+    goalPose: "ros2/goal",
+    position: "ros2/position",
   } as const;
 
   // Queries para cada tópico
@@ -26,6 +26,13 @@ const Dashboard = () => {
     queryKey: ["latest", TOPICS.battery],
     queryFn: () => fetchLatestTopic<any>(TOPICS.battery),
     refetchInterval: refetchMs,
+  });
+
+  // Histórico de batería (últimas 12 horas)
+  const batteryHistoryQuery = useQuery({
+    queryKey: ["history", TOPICS.battery],
+    queryFn: () => fetchTopicHistory<any>(TOPICS.battery),
+    refetchInterval: 60_000,
   });
 
   const dockQuery = useQuery({
@@ -47,20 +54,35 @@ const Dashboard = () => {
   });
 
   const positionQuery = useQuery({
-    queryKey: ["latest", TOPICS.position],
-    queryFn: () => fetchLatestTopic<any>(TOPICS.position),
+    queryKey: ["robot-position"],
+    queryFn: () => fetchRobotPosition(),
     refetchInterval: refetchMs,
   });
 
   // Parse helpers
-  const batteryValue: number | undefined =
-    typeof batteryQuery.data === "number" ? batteryQuery.data : batteryQuery.data?.percentage ?? batteryQuery.data?.value;
+  // Notas: el backend devuelve { topic: string, data: any, received_at: string }
+  // Por ello, extraemos siempre desde "data" cuando esté presente.
+  const batteryValue: number | undefined = (() => {
+    const d = batteryQuery.data?.data ?? batteryQuery.data;
+    return parsePercentString(d?.raw ?? d);
+  })();
 
-  const dockValue: string =
-    typeof dockQuery.data === "string" ? dockQuery.data : dockQuery.data?.status ?? "Desacoplado";
+  const dockValue: string = (() => {
+    const d = dockQuery.data?.data ?? dockQuery.data;
+    const toEs = (s: string) => {
+      const v = s.toLowerCase();
+      if (v === "docked") return "Acoplado";
+      if (v === "undocked") return "Desacoplado";
+      return s;
+    };
+    if (typeof d === "string") return toEs(d);
+    if (typeof d?.raw === "string") return toEs(d.raw);
+    if (typeof d?.status === "string") return toEs(d.status);
+    return "Desacoplado";
+  })();
 
   const velocityValue: string = (() => {
-    const d = velocityQuery.data;
+    const d = velocityQuery.data?.data ?? velocityQuery.data;
     if (typeof d === "number") return d.toFixed(2);
     const v = d?.linear ?? d?.speed ?? d?.v;
     if (typeof v === "number") return v.toFixed(2);
@@ -68,20 +90,50 @@ const Dashboard = () => {
   })();
 
   const goalValue: string = (() => {
-    const d = goalQuery.data;
+    const d = goalQuery.data?.data ?? goalQuery.data;
     const gx = d?.x ?? d?.goal?.x;
     const gy = d?.y ?? d?.goal?.y;
     if (typeof gx === "number" && typeof gy === "number") return `X: ${gx}, Y: ${gy}`;
     return "—";
   })();
 
-  const position = (() => {
-    const d = positionQuery.data;
-    const x = d?.x ?? d?.position?.x;
-    const y = d?.y ?? d?.position?.y;
-    if (typeof x === "number" && typeof y === "number") return { x, y } as const;
-    return undefined;
-  })();
+  const positionName = positionQuery.data?.position_name ?? 'Desconocida';
+  const isMoving = !!positionQuery.data?.is_moving;
+
+  // Serie de batería para el gráfico (construida desde el histórico y actualizada con el latest)
+  const initialBatterySeries: BatteryPoint[] = useMemo(() => {
+    const recs: any[] = batteryHistoryQuery.data?.records ?? [];
+    return recs
+      .map((r) => {
+        const v = parsePercentString(r?.data?.raw ?? r?.data);
+        const t = r?.received_at ? new Date(r.received_at) : undefined;
+        return v != null && t
+          ? { time: t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), battery: v }
+          : undefined;
+      })
+      .filter(Boolean) as BatteryPoint[];
+  }, [batteryHistoryQuery.data]);
+
+  const [batterySeries, setBatterySeries] = useState<BatteryPoint[]>(initialBatterySeries);
+
+  // Sincroniza con el histórico cuando cambia (primer render o refetch del histórico)
+  useEffect(() => {
+    setBatterySeries(initialBatterySeries);
+  }, [initialBatterySeries]);
+
+  // Al recibir un nuevo valor de batería, añádelo y limita el tamaño máximo de la serie
+  useEffect(() => {
+    if (batteryValue == null) return;
+    const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setBatterySeries((prev) => {
+      const last = prev[prev.length - 1];
+      // Si el último punto ya tiene el mismo valor, evita duplicar; podrías mejorar con timestamp real si está disponible
+      if (last && last.battery === batteryValue) return prev;
+      const next = [...prev, { time: nowLabel, battery: batteryValue }];
+      const max = batteryHistoryQuery.data?.count && batteryHistoryQuery.data.count > 0 ? batteryHistoryQuery.data.count : 720;
+      return next.length > max ? next.slice(next.length - max) : next;
+    });
+  }, [batteryValue, batteryHistoryQuery.data?.count]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -100,7 +152,7 @@ const Dashboard = () => {
             status={batteryQuery.isFetching ? "Actualizando…" : undefined}
           />
           <div className="md:col-start-2 md:row-start-1 lg:col-start-3 lg:row-start-1 lg:row-span-2 self-start">
-            <RobotMap position={position ?? { x: 45, y: 30 }} destination={{ x: 70, y: 60 }} status="guiding" />
+            <RobotMap positionName={positionName} isMoving={isMoving} />
           </div>
           <StatusCard title="Estado del dock" value={dockValue} icon={<Dock />} />
 
@@ -109,7 +161,7 @@ const Dashboard = () => {
           <StatusCard title="Objetivo" value={goalValue} icon={<Target />} status={goalValue !== "—" ? "En ruta" : undefined} />
           {/* Eliminadas: Odometría, Bumper Contact y Waypoints */}
           <div className="col-span-1 md:col-span-2 lg:col-span-3">
-            <BatteryChart />
+            <BatteryChart data={batterySeries} />
           </div>
         </main>
       </div>

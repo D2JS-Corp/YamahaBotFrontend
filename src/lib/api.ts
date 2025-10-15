@@ -18,6 +18,44 @@ export async function fetchLatestTopic<T = unknown>(topic: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/**
+ * Obtiene el histórico de un tópico: últimos registros para graficar.
+ * GET /api/v1/robot/topic/{topic}
+ */
+export async function fetchTopicHistory<T = unknown>(topic: string): Promise<T> {
+  const url = `${API_BASE_URL}/topic/${encodeURIComponent(topic)}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Error ${res.status} al consultar ${url}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export interface RobotPositionResponse {
+  position: number;
+  position_name: string;
+  is_moving: boolean;
+}
+
+export async function fetchRobotPosition(): Promise<RobotPositionResponse> {
+  const url = `${API_BASE_URL}/position`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Error ${res.status} al consultar ${url}: ${text}`);
+  }
+  return res.json();
+}
+
+// "68%" -> 68
+export function parsePercentString(raw?: string | number | null): number | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === 'number') return raw;
+  const m = String(raw).match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
+  return m ? Number(m[1]) : undefined;
+}
+
 // Helpers de extracción segura para distintos formatos de payload
 export function getNumericValue(payload: any, keys: string[] = []): number | undefined {
   if (typeof payload === 'number') return payload;
