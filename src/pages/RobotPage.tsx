@@ -6,7 +6,7 @@ import {
 } from '@pipecat-ai/client-react'
 // @ts-ignore - some distributions may not yet ship full types for dist path
 import { RTVIEvent } from '@pipecat-ai/client-js/dist'
-import { getWebrtcUrl } from '../config'
+import { getWebrtcUrl, getIceServers } from '../config'
 
 import ConnectionStatus from '../components/ConnectionStatus'
 import ConnectionControls from '../components/ConnectionControls'
@@ -84,7 +84,10 @@ const RobotPage: React.FC = () => {
     setErrors([])
     setConnecting(true)
     try {
-      await client.connect({ webrtcUrl })
+      if (!client || typeof client.connect !== 'function') {
+        throw new Error('Pipecat client no está disponible o es inválido')
+      }
+      await client.connect({ webrtcUrl, iceServers: getIceServers() })
       setConnected(true)
       setConnecting(false)
     } catch (e: any) {
@@ -98,6 +101,9 @@ const RobotPage: React.FC = () => {
   const disconnect = async () => {
     try {
       setConnecting(false)
+      if (!client || typeof client.disconnect !== 'function') {
+        throw new Error('Pipecat client no está disponible o es inválido')
+      }
       await client.disconnect()
       setConnected(false)
     } catch (e: any) {
