@@ -18,9 +18,7 @@ const queryClient = new QueryClient();
 function App() {
   const pipecatClient = useMemo(() => {
     return new PipecatClient({
-      transport: new SmallWebRTCTransport({
-        iceServers: getIceServers(),
-      }),
+      transport: new SmallWebRTCTransport(),
       enableCam: false,
       enableMic: true
     })
