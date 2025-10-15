@@ -22,12 +22,12 @@ export const BatteryChart = () => {
     <Card className="bg-card border border-border shadow-card">
       <div className="p-6">
         <div className="mb-6">
-          <h3 className="text-xl font-semibold text-foreground mb-2">Battery Level Over Time</h3>
+          <h3 className="text-xl font-semibold text-foreground mb-2">Nivel de batería en el tiempo</h3>
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Battery Level</p>
+            <p className="text-sm text-muted-foreground">Nivel de batería</p>
             <div className="flex items-baseline space-x-2">
               <h3 className="text-2xl font-bold text-foreground">85%</h3>
-              <span className="text-sm text-destructive">Last 24 Hours -5%</span>
+              <span className="text-sm text-destructive">Últimas 24 horas -5%</span>
             </div>
           </div>
         </div>
@@ -58,8 +58,8 @@ export const BatteryChart = () => {
                   borderRadius: '8px',
                   color: 'hsl(var(--card-foreground))'
                 }}
-                labelFormatter={(value) => `Time: ${value}`}
-                formatter={(value) => [`${value}%`, 'Battery']}
+                labelFormatter={(value) => `Hora: ${value}`}
+                formatter={(value) => [`${value}%`, 'Batería']}
               />
               <Line 
                 type="monotone" 

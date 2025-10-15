@@ -36,7 +36,7 @@ export const RobotMap = ({
     <Card className="bg-card border border-border shadow-card">
       <div className="p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-semibold text-foreground">Robot Location</h3>
+          <h3 className="text-xl font-semibold text-foreground">Ubicación del robot</h3>
         </div>
 
         {/* Simplified museum map */}
@@ -47,8 +47,8 @@ export const RobotMap = ({
               <div className="text-center">
                 <MapPin className="w-8 h-8 text-primary mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Current Position: Gallery 3<br />
-                  Coordinates: X: {position.x}, Y: {position.y}
+                  Posición actual: Galería 3<br />
+                  Coordenadas: X: {position.x}, Y: {position.y}
                 </p>
               </div>
             </div>
