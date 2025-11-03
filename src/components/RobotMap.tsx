@@ -1,13 +1,17 @@
 import { Card } from "@/components/ui/card";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 interface RobotMapProps {
+  positionName?: string;
+  isMoving?: boolean;
   position?: { x: number; y: number };
   destination?: { x: number; y: number };
   status?: 'idle' | 'moving' | 'guiding' | 'charging';
 }
 
 export const RobotMap = ({ 
+  positionName = 'Desconocida',
+  isMoving = false,
   position = { x: 45, y: 30 },
   destination = { x: 70, y: 60 },
   status = 'guiding'
@@ -36,7 +40,7 @@ export const RobotMap = ({
     <Card className="bg-card border border-border shadow-card">
       <div className="p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-semibold text-foreground">Robot Location</h3>
+          <h3 className="text-xl font-semibold text-foreground">Ubicación del robot</h3>
         </div>
 
         {/* Simplified museum map */}
@@ -47,8 +51,8 @@ export const RobotMap = ({
               <div className="text-center">
                 <MapPin className="w-8 h-8 text-primary mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Current Position: Gallery 3<br />
-                  Coordinates: X: {position.x}, Y: {position.y}
+                  Posición actual: {positionName}<br />
+                  Estado: {isMoving ? 'Moviéndose' : 'Detenido'}
                 </p>
               </div>
             </div>
