@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Control from "./pages/Control";
 import RobotPage from "./pages/RobotPage";
+import Simulation from "./pages/Simulation";
 import { getIceServers } from "./config";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ function App() {
               <Route path="/" element={<RobotPage />} />
               <Route path="/dashboard" element={<Index />} />
               <Route path="/control" element={<Control />} />
+              <Route path="/simulation" element={<Simulation />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
