@@ -1,18 +1,21 @@
+import { useEffect, useMemo } from "react";
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import { PipecatClientProvider } from "@pipecat-ai/client-react";
 import { PipecatClient } from "@pipecat-ai/client-js";
 import { SmallWebRTCTransport } from "@pipecat-ai/small-webrtc-transport";
-import { useMemo } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { getIceServers, getWebrtcUrl } from "./config";
+
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Control from "./pages/Control";
 import RobotPage from "./pages/RobotPage";
 import Simulation from "./pages/Simulation";
-import { getIceServers } from "./config";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,21 @@ function App() {
       enableCam: false,
       enableMic: true
     })
+  }, []);
+
+  useEffect(() => {
+    const initClient = async () => {
+      try {
+        await pipecatClient.disconnect();
+        await pipecatClient.connect({
+          webrtcUrl: getWebrtcUrl(),
+        })
+      } catch (error) {
+        console.error("Error connecting Pipecat Client:", error);
+        alert("Failed to connect to the server.");
+      }
+    }
+    initClient();
   }, []);
 
   return (
@@ -37,7 +55,6 @@ function App() {
               <Route path="/dashboard" element={<Index />} />
               <Route path="/control" element={<Control />} />
               <Route path="/simulation" element={<Simulation />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>

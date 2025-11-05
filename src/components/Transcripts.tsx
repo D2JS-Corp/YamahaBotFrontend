@@ -38,7 +38,7 @@ const Transcripts: React.FC<TranscriptsProps> = ({ userTranscript, botTranscript
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
       <Panel title="Transcripción de Usuario" text={userTranscript} placeholder="Esperando entrada..." />
-      <Panel title="Transcripción de Asistente" text={botTranscript} placeholder="Esperando respuesta..." />
+      <Panel title="Respuesta del Robot" text={botTranscript} placeholder="Esperando respuesta..." />
     </div>
   )
 }
