@@ -125,6 +125,4 @@ const Transcripts = forwardRef<TranscriptsHandle, TranscriptsProps>((props, ref)
   )
 })
 
-Transcripts.displayName = 'Transcripts'
-
 export default Transcripts

@@ -191,28 +191,28 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
             onClick={handleStartRoute}
             disabled={startDisabled}
           >
-            INICIAR RECORRIDO
+            Iniciar Recorrido
           </button>
           <button
             className={buildButtonClasses(nextDisabled, 'bg-[#212936] hover:bg-[#2a3445] text-[#dbeafe]')}
             onClick={handleMoveToNextBase}
             disabled={nextDisabled}
           >
-            SIGUIENTE BASE
+            Siguiente Base
           </button>
           <button
             className={buildButtonClasses(replayDisabled, 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700')}
             onClick={handleReplayAudio}
             disabled={replayDisabled}
           >
-            REPRODUCIR AUDIO
+            Reproducir Audio
           </button>
           <button
             className={buildButtonClasses(stopDisabled, 'bg-gray-800 hover:bg-gray-700 text-white')}
             onClick={handleStopRoute}
             disabled={stopDisabled}
           >
-            DETENER
+            Detener Recorrido
           </button>
         </div>
         <p className="mt-4 text-center text-xs text-gray-500">{statusMessage}</p>
