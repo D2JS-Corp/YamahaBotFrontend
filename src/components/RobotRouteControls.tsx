@@ -13,11 +13,15 @@ interface RobotRouteControlsProps {
 const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
   const movementPollRef = useRef<number | null>(null)
+  const simulationIndexRef = useRef(0)
+  const simulationTimeoutRef = useRef<number | null>(null)
+  const hasTriggeredSimulationRef = useRef(false)
 
   const [robotInfo, setRobotInfo] = useState<RobotPosition | null>(null)
   const [currentBase, setCurrentBase] = useState<number>(1)
   const [isRouteActive, setIsRouteActive] = useState(false)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const [isSimulationMode, setIsSimulationMode] = useState(false)
 
   const audioFiles = useMemo(
     () => ({
@@ -26,6 +30,15 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
       3: '/simulation-audio/base3.mp3',
     }),
     []
+  )
+
+  const simulationBases = useMemo(
+    () => [
+      { position: 1, position_name: 'Base 1 (simulada)' },
+      { position: 2, position_name: 'Base 2 (simulada)' },
+      { position: 3, position_name: 'Base 3 (simulada)' },
+    ],
+    [],
   )
 
   const appendError = useCallback((message: string) => {
@@ -39,7 +52,36 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
     }
   }, [])
 
-  const fetchRobotPosition = useCallback(async () => {
+  const stopSimulationTimers = useCallback(() => {
+    if (simulationTimeoutRef.current !== null) {
+      window.clearTimeout(simulationTimeoutRef.current)
+      simulationTimeoutRef.current = null
+    }
+  }, [])
+
+  const simulateFetchPosition = useCallback((resetIndex = false) => {
+    if (resetIndex) {
+      simulationIndexRef.current = 0
+    }
+
+    const current = simulationBases[simulationIndexRef.current] ?? simulationBases[0]
+    if (!current) {
+      return null
+    }
+
+    const data: RobotPosition = {
+      position: current.position,
+      position_name: current.position_name,
+      is_moving: false,
+    }
+
+    setRobotInfo(data)
+    setCurrentBase(data.position)
+
+    return data
+  }, [simulationBases])
+
+  const fetchRobotPositionFromServer = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.REACT_APP_API_URL}/api/v1/robot/position`)
       if (!response.ok) {
@@ -48,13 +90,35 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
       const data: RobotPosition = await response.json()
       setRobotInfo(data)
       setCurrentBase(data.position)
+      if (isSimulationMode) {
+        setIsSimulationMode(false)
+        hasTriggeredSimulationRef.current = false
+      }
+
       return data
     } catch (error) {
       console.error('Error obteniendo la posición del robot:', error)
       appendError('No se pudo obtener la posición del robot')
-      return null
+      stopMovementPolling()
+
+      if (!hasTriggeredSimulationRef.current) {
+        appendError('Activando modo simulación sin conexión con el robot real.')
+        hasTriggeredSimulationRef.current = true
+      }
+
+      setIsSimulationMode(true)
+
+      return simulateFetchPosition(true)
     }
-  }, [appendError])
+  }, [appendError, isSimulationMode, simulateFetchPosition, stopMovementPolling])
+
+  const fetchRobotPosition = useCallback(async () => {
+    if (isSimulationMode) {
+      return simulateFetchPosition()
+    }
+
+    return fetchRobotPositionFromServer()
+  }, [fetchRobotPositionFromServer, isSimulationMode, simulateFetchPosition])
 
   const playAudioForBase = useCallback(
     (base: number) => {
@@ -80,18 +144,58 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
   const handleStartRoute = useCallback(async () => {
     setIsRouteActive(true)
     setIsAudioPlaying(false)
+    stopSimulationTimers()
     const position = await fetchRobotPosition()
     if (position) {
       playAudioForBase(position.position)
     } else {
       setIsRouteActive(false)
     }
-  }, [fetchRobotPosition, playAudioForBase])
+  }, [fetchRobotPosition, playAudioForBase, stopSimulationTimers])
 
   const handleMoveToNextBase = useCallback(async () => {
     if (!isRouteActive) {
       return
     }
+
+    if (isSimulationMode) {
+      setIsAudioPlaying(false)
+      stopSimulationTimers()
+
+      setRobotInfo(prev => {
+        if (prev) {
+          return { ...prev, is_moving: true }
+        }
+
+        const current = simulationBases[simulationIndexRef.current] ?? simulationBases[0]
+        return current
+          ? { position: current.position, position_name: current.position_name, is_moving: true }
+          : { position: 1, position_name: 'Base 1 (simulada)', is_moving: true }
+      })
+
+      simulationTimeoutRef.current = window.setTimeout(() => {
+        const nextIndex = (simulationIndexRef.current + 1) % simulationBases.length
+        simulationIndexRef.current = nextIndex
+        const nextBase = simulationBases[nextIndex]
+
+        if (nextBase) {
+          const data: RobotPosition = {
+            position: nextBase.position,
+            position_name: nextBase.position_name,
+            is_moving: false,
+          }
+
+          setRobotInfo(data)
+          setCurrentBase(nextBase.position)
+          playAudioForBase(nextBase.position)
+        }
+
+        simulationTimeoutRef.current = null
+      }, 1200)
+
+      return
+    }
+
     setIsAudioPlaying(false)
     stopMovementPolling()
     try {
@@ -115,17 +219,18 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
       stopMovementPolling()
       appendError('Error al mover el robot')
     }
-  }, [appendError, fetchRobotPosition, isRouteActive, playAudioForBase, stopMovementPolling])
+  }, [appendError, fetchRobotPosition, isRouteActive, isSimulationMode, playAudioForBase, simulationBases, stopMovementPolling, stopSimulationTimers])
 
   const handleStopRoute = useCallback(() => {
     setIsRouteActive(false)
     setIsAudioPlaying(false)
     stopMovementPolling()
+    stopSimulationTimers()
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
-  }, [stopMovementPolling])
+  }, [stopMovementPolling, stopSimulationTimers])
 
   const handleReplayAudio = useCallback(() => {
     if (!isRouteActive) {
@@ -148,12 +253,16 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
       if (audioRef.current) {
         audioRef.current.pause()
       }
+      stopSimulationTimers()
     }
-  }, [stopMovementPolling])
+  }, [stopMovementPolling, stopSimulationTimers])
 
   const isRobotMoving = robotInfo?.is_moving ?? false
   const statusMessage = useMemo(() => {
     if (!isRouteActive) {
+      if (isSimulationMode) {
+        return 'Modo simulación activo. Inicia el recorrido para reproducir la guía simulada.'
+      }
       return 'Inicia el recorrido para escuchar la guía.'
     }
     if (isRobotMoving) {
@@ -163,7 +272,7 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
       return 'Reproduciendo audio de la base actual.'
     }
     return 'Listo para pasar a la siguiente base o repetir el audio.'
-  }, [isAudioPlaying, isRobotMoving, isRouteActive])
+  }, [isAudioPlaying, isRobotMoving, isRouteActive, isSimulationMode])
 
   const buildButtonClasses = (disabled: boolean, activeClasses: string) =>
     `px-4 py-2 rounded-lg font-medium transition-all ${disabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : activeClasses}`
@@ -172,6 +281,35 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
   const nextDisabled = !isRouteActive || isRobotMoving
   const replayDisabled = !isRouteActive
   const stopDisabled = !isRouteActive && !isAudioPlaying
+  const simulationToggleDisabled = isRouteActive
+
+  const handleSimulationToggle = useCallback(() => {
+    if (simulationToggleDisabled) {
+      return
+    }
+
+    setIsSimulationMode(prev => {
+      const next = !prev
+
+      if (next) {
+        appendError('Modo simulación activado manualmente.')
+        stopMovementPolling()
+        stopSimulationTimers()
+        hasTriggeredSimulationRef.current = true
+        simulateFetchPosition(true)
+      } else {
+        appendError('Modo simulación desactivado. Intentando reconectar con el robot real.')
+        stopSimulationTimers()
+        hasTriggeredSimulationRef.current = false
+        simulationIndexRef.current = 0
+        fetchRobotPositionFromServer()
+      }
+
+      return next
+    })
+  }, [appendError, fetchRobotPositionFromServer, simulationToggleDisabled, simulateFetchPosition, stopMovementPolling, stopSimulationTimers])
+
+  const simulationButtonLabel = isSimulationMode ? 'Desactivar Simulación' : 'Activar Simulación'
 
   return (
     <Fragment>
@@ -214,8 +352,20 @@ const RobotRouteControls: React.FC<RobotRouteControlsProps> = ({ onError }) => {
           >
             Detener Recorrido
           </button>
+          <button
+            className={buildButtonClasses(simulationToggleDisabled, isSimulationMode ? 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white' : 'bg-white border border-blue-300 hover:bg-blue-50 text-blue-600')}
+            onClick={handleSimulationToggle}
+            disabled={simulationToggleDisabled}
+          >
+            {simulationButtonLabel}
+          </button>
         </div>
         <p className="mt-4 text-center text-xs text-gray-500">{statusMessage}</p>
+        {isSimulationMode && (
+          <p className="mt-2 text-center text-[11px] text-blue-600">
+            Sin conexión con el robot real: se reproducen posiciones simuladas.
+          </p>
+        )}
       </section>
 
       <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />

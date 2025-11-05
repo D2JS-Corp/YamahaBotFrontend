@@ -35,9 +35,9 @@ const RobotPage = () => {
           <VoiceMeters />
           <MicToggleButton />
 
-          <RobotRouteControls onError={addError} />
           <PipecatClientAudio />
           <Transcripts errors={errors} onClearErrors={clearErrors} />
+          <RobotRouteControls onError={addError} />
         </div>
       </div>
     </div>

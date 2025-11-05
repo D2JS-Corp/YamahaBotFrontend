@@ -93,7 +93,7 @@ const ConnectionStatus: React.FC = () => {
   useRTVIClientEvent(
     RTVIEvent.BotStoppedSpeaking,
     useCallback(() => {
-      setConversationState("listening")
+      setConversationState("idle")
     }, [])
   );
 

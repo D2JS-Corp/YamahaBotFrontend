@@ -94,7 +94,7 @@ const Transcripts = forwardRef<TranscriptsHandle, TranscriptsProps>((props, ref)
         <Panel title="Respuesta del Robot" text={botTranscript} placeholder="Esperando respuesta..." />
       </div>
 
-      <div className="flex justify-center gap-4">
+      {/* <div className="flex justify-center gap-4">
         <button
           className="px-4 py-2 rounded-lg font-medium bg-[#212936] hover:bg-[#2a3445] text-[#dbeafe] transition-all"
           onClick={clearTranscripts}
@@ -120,7 +120,7 @@ const Transcripts = forwardRef<TranscriptsHandle, TranscriptsProps>((props, ref)
             ))}
           </ul>
         </section>
-      )}
+      )} */}
     </div>
   )
 })
